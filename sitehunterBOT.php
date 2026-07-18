@@ -1,6 +1,23 @@
 <?php
 
-// Telegram Bot Token - REPLACE THIS WITH A NEW TOKEN IMMEDIATELY
+// ===== WEBHOOK SECURITY =====
+$headers = getallheaders();
+$receivedToken = $headers['X-Telegram-Bot-Api-Secret-Token'] ?? '';
+$secretToken = 'Awmtee'; // CHANGE THIS!
+
+if ($receivedToken !== $secretToken) {
+    http_response_code(401);
+    die('Unauthorized');
+}
+// ============================
+
+// Show status when visited in browser
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    echo "✅ Bot is running! Webhook URL: " . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    exit;
+}
+
+// ===== YOUR EXISTING CODE =====
 define('BOT_TOKEN', '8641593682:AAHiMVXQbin-rQKJ_OOYn8F_PAlWVIsKPjg');
 define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
 
@@ -11,11 +28,8 @@ $gatewayTerms = [
     "amazon pay", "apple pay", "visa", "mastercard", "payment gateway"
 ];
 
-// Function to analyze a website
-function analyzeWebsite($url, $gatewayTerms)
-{
+function analyzeWebsite($url, $gatewayTerms) {
     try {
-        // Fetch the website content
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -31,7 +45,6 @@ function analyzeWebsite($url, $gatewayTerms)
             return "❌ Unable to fetch the website. HTTP Code: $httpCode";
         }
 
-        // Analyze content for payment gateways
         $detectedGateways = [];
         foreach ($gatewayTerms as $term) {
             if (stripos($response, $term) !== false) {
@@ -39,16 +52,10 @@ function analyzeWebsite($url, $gatewayTerms)
             }
         }
 
-        // Check for captchas
         $captchaPresent = stripos($response, 'g-recaptcha') !== false || stripos($response, 'captcha') !== false;
-
-        // Check for Cloudflare
         $cloudflarePresent = isset($headers['cf-ray']) || (isset($headers['Set-Cookie']) && strpos($headers['Set-Cookie'], '__cfduid') !== false);
-
-        // Check for GraphQL
         $graphqlPresent = stripos($response, '/graphql') !== false;
 
-        // Detect platform
         $platform = "Unknown";
         if (stripos($response, "wp-content") !== false) {
             $platform = "WordPress";
@@ -58,7 +65,6 @@ function analyzeWebsite($url, $gatewayTerms)
             $platform = "Magento";
         }
 
-        // Build result
         $result = "🔍 Gateways Fetched Successfully ✅\n";
         $result .= "━━━━━━━━━━━━━\n";
         $result .= "🚀 URL: $url 🔗\n";
@@ -76,9 +82,7 @@ function analyzeWebsite($url, $gatewayTerms)
     }
 }
 
-// Function to send messages via Telegram
-function sendMessage($chatId, $message)
-{
+function sendMessage($chatId, $message) {
     $url = API_URL . "sendMessage";
     $postData = [
         'chat_id' => $chatId,
@@ -123,4 +127,6 @@ if (isset($update['message'])) {
     } 
 }
 
+// Send a 200 OK response to Telegram
+http_response_code(200);
 ?>
