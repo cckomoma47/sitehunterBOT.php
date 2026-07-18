@@ -1,17 +1,12 @@
 <?php
 
-// ===== 1. NO SECRET TOKEN CHECK (since we didn't set one) =====
-// ============================================================
-
-// ===== 2. SHOW STATUS WHEN VISITED IN BROWSER =====
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && !isset($_GET['webhook'])) {
-    echo "✅ Bot is running!";
-    echo "<br>Webhook URL: https://sitehunterbot-php.onrender.com/sitehunterBOT.php";
-    echo "<br>Bot Token: " . substr('8641593682:AAHiMVXQbin-rQKJ_OOYn8F_PAlWVIsKPjg', 0, 10) . "...";
+// ===== SHOW STATUS WHEN VISITED IN BROWSER =====
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    echo "✅ Bot is running! Webhook URL: " . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
     exit;
 }
 
-// ===== 3. YOUR BOT CODE =====
+// ===== YOUR BOT CODE (NO SECRET TOKEN CHECK) =====
 define('BOT_TOKEN', '8641593682:AAHiMVXQbin-rQKJ_OOYn8F_PAlWVIsKPjg');
 define('API_URL', 'https://api.telegram.org/bot' . BOT_TOKEN . '/');
 
@@ -22,9 +17,7 @@ $gatewayTerms = [
     "amazon pay", "apple pay", "visa", "mastercard", "payment gateway"
 ];
 
-// Function to analyze a website
-function analyzeWebsite($url, $gatewayTerms)
-{
+function analyzeWebsite($url, $gatewayTerms) {
     try {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -78,9 +71,7 @@ function analyzeWebsite($url, $gatewayTerms)
     }
 }
 
-// Function to send messages via Telegram
-function sendMessage($chatId, $message)
-{
+function sendMessage($chatId, $message) {
     $url = API_URL . "sendMessage";
     $postData = [
         'chat_id' => $chatId,
@@ -96,14 +87,13 @@ function sendMessage($chatId, $message)
     $error = curl_error($ch);
     curl_close($ch);
     
-    // Log errors for debugging
     if ($error) {
         error_log("SendMessage Error: " . $error);
     }
     return $result;
 }
 
-// ===== 4. HANDLE INCOMING UPDATES =====
+// ===== HANDLE INCOMING UPDATES =====
 $update = json_decode(file_get_contents("php://input"), true);
 
 // Log the update for debugging
